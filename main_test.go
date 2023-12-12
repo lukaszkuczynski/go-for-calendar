@@ -7,8 +7,7 @@ import (
 )
 
 func TestHelloForAName(t *testing.T) {
-
-	var expected string = "Welcome to the Kuczas World, Ziom"
+	expected := "Welcome to the Kuczas World, Ziom"
 	var actual string = say_hi("Ziom")
 
 	assert.Equal(t, expected, actual)
@@ -17,8 +16,8 @@ func TestHelloForAName(t *testing.T) {
 
 func TestFor5(t *testing.T) {
 
-	var expected int = 5
-	var actual int = give_me_5()
+	var expected rune = 5
+	var actual rune = rune(give_me_5())
 
 	assert.Equal(t, expected, actual)
 
