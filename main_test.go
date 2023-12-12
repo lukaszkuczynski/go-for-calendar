@@ -14,3 +14,12 @@ func TestHelloForAName(t *testing.T) {
 	assert.Equal(t, expected, actual)
 
 }
+
+func TestFor5(t *testing.T) {
+
+	var expected int = 5
+	var actual int = give_me_5()
+
+	assert.Equal(t, expected, actual)
+
+}

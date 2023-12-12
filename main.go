@@ -11,6 +11,11 @@ func say_hi(name string) string {
 	return lineToWrite
 }
 
+func give_me_5() (the_return_value int) {
+	the_return_value = 5
+	return
+}
+
 func main() {
 	var name = "Kuczas"
 	say_hi((name))
