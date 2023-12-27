@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"time"
 )
 
 func say_hi(name string) string {
@@ -15,13 +14,6 @@ func say_hi(name string) string {
 func give_me_5() (the_return_value int) {
 	the_return_value = 5
 	return
-}
-
-func main() {
-	var name = "Kuczas"
-	defer fmt.Println("This will be printed AFTER whole main was executed!")
-	say_hi((name))
-	fmt.Println("The time is", time.Now())
 }
 
 func aFunctionThatGetsWord() string {
