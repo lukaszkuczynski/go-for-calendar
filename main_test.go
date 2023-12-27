@@ -123,3 +123,43 @@ func TestMutatorIsLengthDescriptor(t *testing.T) {
 	aResult := returnStringMutateFunctionResult(lenghtMutator, "text")
 	assert.Equal(t, "Length is 4", aResult)
 }
+
+func TestInitials(t *testing.T) {
+	georgeClooney := Person{"George", "Clooney", 0}
+	georgesInitials := georgeClooney.calcInitials()
+	assert.Equal(t, "GC", georgesInitials)
+}
+
+func TestSetAgeWithPointer(t *testing.T) {
+	johnWayne := Person{"John", "Wayne", 99}
+	johnWayne.setAge(10)
+	assert.Equal(t, 10, johnWayne.age)
+}
+
+func TestGetAgeValidated(t *testing.T) {
+	johnWayne := Person{"JohnMinus", "Wayne", -1}
+	_, error := johnWayne.getAgeValidated()
+	assert.EqualError(t, error, "This Person has some error JohnMinus")
+}
+
+func TestInterface(t *testing.T) {
+	var someone Identifiable = Person{"Luk", "Skywalker", 10}
+	var intro = someone.sayIntro()
+	assert.Equal(t, "I am Luk", intro)
+}
+
+func TestInterfaceWithPointer(t *testing.T) {
+	var yodaConcrete = Person{"Yoda", "Master", 1}
+	var yoda Identifiable = yodaConcrete
+	assert.Equal(t, "I am Yoda", yoda.sayIntro())
+}
+
+func TestStringBasedOnTypeAssertion(t *testing.T) {
+	var someString string = "somestringishere"
+	assert.Equal(t, checkIfStringBasedOnTypeAssertion(someString), true)
+}
+
+func TestAStringer(t *testing.T) {
+	var mrNobody = Person{"mr", "nobody", 10}
+	assert.Equal(t, "mr", printWithStringer(mrNobody))
+}

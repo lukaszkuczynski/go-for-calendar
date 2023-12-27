@@ -121,3 +121,54 @@ func makeASliceOfWows(size int) []string {
 func returnStringMutateFunctionResult(mutator func(string) string, param string) string {
 	return mutator(param)
 }
+
+type Person struct {
+	firstName string
+	lastName  string
+	age       int
+}
+
+func (p Person) calcInitials() string {
+	return fmt.Sprint(string(p.firstName[0]), string(p.lastName[0]))
+}
+
+func (p *Person) setAge(age int) {
+	p.age = age
+}
+
+type Identifiable interface {
+	sayIntro() string
+}
+
+func (p Person) sayIntro() string {
+	return "I am " + fmt.Sprint(p.firstName)
+}
+
+func checkIfStringBasedOnTypeAssertion(iSomething interface{}) bool {
+	_, ok := iSomething.(string)
+	return ok
+}
+
+func (p Person) String() string {
+	return p.firstName
+}
+
+func printWithStringer(p Person) string {
+	fmt.Sprint(p)
+	return fmt.Sprint(p)
+}
+
+type PersonError struct {
+	person Person
+}
+
+func (e *PersonError) Error() string {
+	return "This Person has some error " + fmt.Sprint(e.person)
+}
+
+func (p *Person) getAgeValidated() (int, error) {
+	if p.age < 0 {
+		return 0, &PersonError{*p}
+	}
+	return p.age, nil
+}
