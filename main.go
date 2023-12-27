@@ -1,4 +1,4 @@
-package go_for_calendar
+package main
 
 import (
 	"errors"
@@ -19,6 +19,7 @@ func give_me_5() (the_return_value int) {
 
 func main() {
 	var name = "Kuczas"
+	defer fmt.Println("This will be printed AFTER whole main was executed!")
 	say_hi((name))
 	fmt.Println("The time is", time.Now())
 }
@@ -68,4 +69,55 @@ func getACapitalCity(country string) (string, error) {
 		return "", errors.New("Country not found!")
 	}
 	return capital, nil
+}
+
+func runStrangeLoopNTimes(n int) string {
+	i := 1
+	result := ""
+	for i <= n {
+		result += fmt.Sprint(i)
+		i++
+	}
+	return result
+}
+
+func checkIfKuczek(aTextToCheck string) bool {
+	if name := aTextToCheck; name == "Kuczek" {
+		return true
+	} else {
+		return false
+	}
+}
+
+type LukeDay struct {
+	isBibleRead   bool
+	areTeethClean bool
+	workDayHours  int
+}
+
+func checkMyDay(day LukeDay) string {
+	if !day.isBibleRead {
+		return "not nice! Read Bible"
+	} else if !day.areTeethClean {
+		return "not nice! Go and wash your teeth!"
+	} else {
+		return "Good Boy! You worked " + fmt.Sprint(day.workDayHours) + " hours."
+	}
+}
+
+func weekendGetter() []string {
+	allDays := [7]string{"mon", "tue", "wed", "thu", "fri", "sat", "sun"}
+	return allDays[5:6]
+}
+
+func makeASliceOfWows(size int) []string {
+	aSlice := make([]string, size)
+	for i := 0; i < size; i += 1 {
+		aSlice[i] = "wow"
+	}
+	return aSlice
+}
+
+func returnStringMutateFunctionResult(mutator func(string) string, param string) string {
+	return mutator(param)
 }

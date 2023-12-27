@@ -1,6 +1,7 @@
-package go_for_calendar
+package main
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -62,4 +63,63 @@ func TestMapReturnsCorrectStuff(t *testing.T) {
 	actual2, errors2 := getACapitalCity("ThatCountryDoesntExist")
 	assert.Equal(t, "", actual2)
 	assert.NotNil(t, errors2)
+}
+
+func TestStrangeLoop(t *testing.T) {
+	expected := "12345"
+	actual := runStrangeLoopNTimes(5)
+	assert.Equal(t, expected, actual)
+}
+
+func TestShortIfAssignment(t *testing.T) {
+	assert.Equal(t, true, checkIfKuczek("Kuczek"))
+}
+
+func TestMyDayStruct(t *testing.T) {
+	lukeDay := LukeDay{false, false, 8}
+	actual_message := checkMyDay(lukeDay)
+	assert.Contains(t, actual_message, "not nice")
+}
+
+func TestMyDayStructWithLiteral(t *testing.T) {
+	lukeDay := LukeDay{workDayHours: 6, isBibleRead: true, areTeethClean: true}
+	actual_message := checkMyDay(lukeDay)
+	assert.Contains(t, actual_message, "6 hours")
+}
+
+func TestWeekendGetter(t *testing.T) {
+	weekendDays := weekendGetter()
+	assert.Contains(t, weekendDays, "sat")
+}
+
+func TestMakeIt(t *testing.T) {
+	wowsSlice := makeASliceOfWows(5)
+	assert.Contains(t, wowsSlice, "wow")
+	assert.Equal(t, len(wowsSlice), 5)
+	assert.Equal(t, cap(wowsSlice), 5)
+}
+
+func TestMakeItAppended(t *testing.T) {
+	// this is to show I can extend the original slice size
+	wowsSlice := makeASliceOfWows(5)
+	wowsSlice = append(wowsSlice, "wow")
+	assert.Equal(t, len(wowsSlice), 6)
+}
+
+func TestWowsWithRange(t *testing.T) {
+	wowsSlice := makeASliceOfWows(10)
+	expectedI := 0
+	for i, wow := range wowsSlice {
+		assert.Equal(t, expectedI, i)
+		assert.Equal(t, wow, "wow")
+		expectedI += 1
+	}
+}
+
+func TestMutatorIsLengthDescriptor(t *testing.T) {
+	var lenghtMutator = func(txt string) string {
+		return "Length is " + fmt.Sprint(len(txt))
+	}
+	aResult := returnStringMutateFunctionResult(lenghtMutator, "text")
+	assert.Equal(t, "Length is 4", aResult)
 }
