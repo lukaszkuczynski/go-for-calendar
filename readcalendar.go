@@ -34,25 +34,6 @@ func init() {
 
 }
 
-// Request a token from the web, then returns the retrieved token.
-func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
-	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
-
-	fmt.Printf("Go to the following link in your browser then type the "+
-		"authorization code: \n%v\n", authURL)
-
-	var authCode string
-	if _, err := fmt.Scan(&authCode); err != nil {
-		log.Fatalf("Unable to read authorization code: %v", err)
-	}
-
-	tok, err := config.Exchange(context.TODO(), authCode)
-	if err != nil {
-		log.Fatalf("Unable to retrieve token from web: %v", err)
-	}
-	return tok
-}
-
 func main() {
 	http.HandleFunc("/", handleMain)
 	http.HandleFunc("/login", handleGoogleLogin)
@@ -71,6 +52,19 @@ func handleMain(w http.ResponseWriter, r *http.Request) {
 		if !ok {
 			panic("token was not oauth2.Token type!")
 		}
+		if token2.Expiry.Before(time.Now()) {
+			print("refresh is:")
+			print(token2.RefreshToken)
+			if token2.RefreshToken == "" {
+				http.Redirect(w, r, "/login", http.StatusAccepted)
+				return
+			}
+			token2, err := newTokenFromRefreshToken(token2.RefreshToken, w, r)
+			if err != nil {
+				panic("Refresh token problem")
+			}
+			saveToken(r, token2, w)
+		}
 		eventsText, err := getMyEvents(token2)
 		if err == nil {
 			fmt.Fprintf(w, eventsText)
@@ -86,6 +80,19 @@ func handleMain(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, htmlIndex)
 	}
 
+}
+
+func newTokenFromRefreshToken(refreshToken string, w http.ResponseWriter, r *http.Request) (*oauth2.Token, error) {
+	token := new(oauth2.Token)
+	token.RefreshToken = refreshToken
+	token.Expiry = time.Now()
+
+	// TokenSource will refresh the token if needed (which is likely in this
+	// use case)
+	oauthConfig := *googleOauthConfig
+	ts := oauthConfig.TokenSource(oauth2.NoContext, token)
+
+	return ts.Token()
 }
 
 var (
@@ -133,10 +140,14 @@ func storeToken(w http.ResponseWriter, r *http.Request) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("code exchange failed: %s", err.Error())
 	}
+	saveToken(r, token, w)
+	return true, nil
+}
+
+func saveToken(r *http.Request, token *oauth2.Token, w http.ResponseWriter) {
 	session, _ := store.Get(r, "session.id")
 	session.Values["token"] = token
 	session.Save(r, w)
-	return true, nil
 }
 
 func getMyEvents(token *oauth2.Token) (string, error) {
