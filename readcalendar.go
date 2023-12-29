@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/gorilla/sessions"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/calendar/v3"
@@ -44,6 +46,7 @@ func init() {
 	if err != nil {
 		log.Fatalf("Unable to parse client secret file to config: %v", err)
 	}
+	gob.Register(&oauth2.Token{})
 
 }
 
@@ -98,12 +101,28 @@ func main() {
 }
 
 func handleMain(w http.ResponseWriter, r *http.Request) {
-	var htmlIndex = `<html>
+	session, _ := store.Get(r, "session.id")
+	if session.Values["token"] != nil {
+		val := session.Values["token"]
+		var token2 = &oauth2.Token{}
+		token2, ok := val.(*oauth2.Token)
+		if !ok {
+			panic("token was not oauth2.Token type!")
+		}
+		eventsText, err := getMyEvents(token2)
+		if err == nil {
+			fmt.Fprintf(w, eventsText)
+		}
+	} else {
+
+		var htmlIndex = `<html>
 <body>
 	<a href="/login">Google Log In</a>
 </body>
 </html>`
-	fmt.Fprintf(w, htmlIndex)
+		fmt.Fprintf(w, htmlIndex)
+	}
+
 }
 
 var (
@@ -111,21 +130,76 @@ var (
 	oauthStateString = "pseudo-random"
 )
 
+var store = sessions.NewCookieStore([]byte("123"))
+
 func handleGoogleLogin(w http.ResponseWriter, r *http.Request) {
-	googleOauthConfig.Scopes = []string{"https://www.googleapis.com/auth/userinfo.email"}
+	googleOauthConfig.Scopes = []string{"https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/calendar.events.readonly"}
 	url := googleOauthConfig.AuthCodeURL(oauthStateString)
 	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 }
 
 func handleGoogleCallback(w http.ResponseWriter, r *http.Request) {
-	content, err := getUserInfo(r.FormValue("state"), r.FormValue("code"))
+	// content, err := getUserInfo(r.FormValue("state"), r.FormValue("code"))
+	// content, err := getMyEvents(r.FormValue("state"), r.FormValue("code"))
+	_, err := storeToken(w, r)
 	if err != nil {
 		fmt.Println(err.Error())
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
-	fmt.Fprintf(w, "Content: %s\n", content)
+	// fmt.Fprintf(w, "Content: %s\n", content)
 }
+
+func storeToken(w http.ResponseWriter, r *http.Request) (bool, error) {
+	var state = r.FormValue("state")
+	var code = r.FormValue("code")
+	if state != oauthStateString {
+		return false, fmt.Errorf("invalid oauth state")
+	}
+	token, err := googleOauthConfig.Exchange(oauth2.NoContext, code)
+	if err != nil {
+		return false, fmt.Errorf("code exchange failed: %s", err.Error())
+	}
+	session, _ := store.Get(r, "session.id")
+	session.Values["token"] = token
+	session.Save(r, w)
+	return true, nil
+}
+
+func getMyEvents(token *oauth2.Token) (string, error) {
+
+	ctx := context.Background()
+	var src oauth2.TokenSource = googleOauthConfig.TokenSource(ctx, token)
+	srv, err := calendar.NewService(ctx, option.WithTokenSource(src))
+	if err != nil {
+		log.Fatalf("Unable to retrieve Calendar client: %v", err)
+	}
+	t := time.Now().Format(time.RFC3339)
+	events, err := srv.Events.List("primary").ShowDeleted(false).
+		SingleEvents(true).TimeMin(t).MaxResults(10).OrderBy("startTime").Do()
+	if err != nil {
+		log.Fatalf("Unable to retrieve next ten of the user's events: %v", err)
+	}
+	fmt.Println("Upcoming events:")
+	var response string = ""
+	if len(events.Items) == 0 {
+		fmt.Println("No upcoming events found.")
+	} else {
+		for _, item := range events.Items {
+			date := item.Start.DateTime
+			if date == "" {
+				date = item.Start.Date
+			}
+			fmt.Printf("%v (%v)\n", item.Summary, date)
+			response += item.Summary
+			response += "\n"
+		}
+	}
+	// contents := []byte(response)
+	return response, nil
+
+}
+
 func getUserInfo(state string, code string) ([]byte, error) {
 	if state != oauthStateString {
 		return nil, fmt.Errorf("invalid oauth state")
