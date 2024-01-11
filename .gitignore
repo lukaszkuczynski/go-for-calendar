@@ -1,5 +1,5 @@
 wiki
 *.txt
-credentials.json
+*credentials.json
 .env
 token.json

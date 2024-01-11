@@ -23,7 +23,8 @@ var (
 
 func init() {
 	//
-	b, err := os.ReadFile("credentials.json")
+	credentialsPath := os.Getenv("GOOGLE_CREDENTIALS_PATH")
+	b, err := os.ReadFile(credentialsPath)
 	if err != nil {
 		log.Fatalf("Unable to read client secret file: %v", err)
 	}
@@ -67,13 +68,28 @@ func handleMain(w http.ResponseWriter, r *http.Request) {
 			}
 			saveToken(r, token2, w)
 		}
+		fmt.Fprintf(w, "\nCURRENT month\n")
+		fmt.Fprintf(w, "\nministry\n")
 		eventsText, err := getThisMonthEventsWithTime(token2, "[mM]inistry", true)
 		if err == nil {
 			fmt.Fprintf(w, eventsText)
 		}
+		fmt.Fprintf(w, "\nKLS\n")
 		klsEventsText, err := getThisMonthEventsWithTime(token2, "[kK][lLłŁ][sS].+", true)
 		if err == nil {
 			fmt.Fprintf(w, klsEventsText)
+		}
+
+		fmt.Fprintf(w, "\n\n\n\nLAST month\n")
+		fmt.Fprintf(w, "\nministry\n")
+		ministryLast, err := getThisMonthEventsWithTime(token2, "[mM]inistry", false)
+		if err == nil {
+			fmt.Fprintf(w, ministryLast)
+		}
+		fmt.Fprintf(w, "\nKLS\n")
+		klsLast, err := getThisMonthEventsWithTime(token2, "[kK][lLłŁ][sS].+", false)
+		if err == nil {
+			fmt.Fprintf(w, klsLast)
 		}
 	} else {
 
@@ -158,10 +174,12 @@ func saveToken(r *http.Request, token *oauth2.Token, w http.ResponseWriter) {
 func getThisMonthEventsWithTime(token *oauth2.Token, regex string, currentMonth bool) (string, error) {
 	t := time.Now()
 	monthStart := t.AddDate(0, -1, 0).Month()
+	yearStart := t.AddDate(0, -1, 0).Year()
 	if currentMonth {
-		monthStart = t.AddDate(0, 0, 0).Month()
+		monthStart = t.Month()
+		yearStart = t.Year()
 	}
-	timeMin := time.Date(t.Year(), monthStart, 0, 0, 0, 0, t.Nanosecond(), t.Location())
+	timeMin := time.Date(yearStart, monthStart, 0, 0, 0, 0, t.Nanosecond(), t.Location())
 	timeMaxStr := timeMin.AddDate(0, 1, 0).Format(time.RFC3339)
 	timeMinStr := timeMin.Format(time.RFC3339)
 	ctx := context.Background()

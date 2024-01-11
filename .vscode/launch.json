@@ -9,7 +9,7 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "readcalendar.go"
+            "program": "main.go"
         }
     ]
 }
